@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Check the user's choice
+case $1 in
+    "1")
+        # Rename nginx.conf.test to nginx.conf
+        mv /etc/nginx/nginx.conf.test /etc/nginx/nginx.conf
+        echo "nginx.conf.test renamed to nginx.conf."
+        ;;
+    "2")
+        # Check if nginx.conf.stream contains the YouTube stream ID
+        if grep -q 'YouTubeStreamID' /etc/nginx/nginx.conf.stream; then
+            # Copy nginx.conf.stream to nginx.conf
+            cp /etc/nginx/nginx.conf.stream /etc/nginx/nginx.conf
+            echo "nginx.conf.stream copied to nginx.conf."
+        else
+            echo "YouTube stream ID not found in nginx.conf.stream. No action taken."
+        fi
+        ;;
+    *)
+        echo "Invalid choice. No action taken."
+        ;;
+esac
+
+# Display the contents of nginx.conf
+cat /etc/nginx/nginx.conf
