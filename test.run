@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if systemctl is-active --quiet nginx.service; then
+echo "rtmp server is running."
+else
+# If it's not running, start the service
+systemctl start nginx.service
+
+# Verify if the service is running
+if systemctl is-active --quiet nginx.service; then
+    echo "rtmp server is running."
+else
+    # If it's still not running, try reloading the service
+    systemctl reload nginx.service
+    
+    # Check again
+    if systemctl is-active --quiet nginx.service; then
+        echo "rtmp server is running after reloading."
+    else
+        echo "Failed to start or reload rtmp server."
+    fi
+fi
+
+fi
