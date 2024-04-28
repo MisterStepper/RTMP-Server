@@ -1,0 +1,106 @@
+add stats webpage
+rtmp {
+    server {
+        listen 1935;
+        chunk_size 4096;
+
+        application live {
+            live on;
+            record off;
+            push rtmp://a.rtmp.youtube.com/live2/key;
+
+            # RTMP stat
+            stats {
+                stats_path /stat;
+                stats_auth username:password;  # Basic HTTP auth for stats page, optional
+            }
+        }
+    }
+}
+
+http {
+    server {
+        listen 8080;
+
+        location /stat {
+            rtmp_stat all;
+            rtmp_stat_stylesheet /styles/stat.xsl;  # Point to your stat.xsl file
+        }
+
+        location /styles/ {
+            alias /path/to/styles/;  # Path where your stat.xsl file is located
+        }
+    }
+}
+
+
+Run as https using self signing cert
+
+
+
+
+Step 1: Create a Self-Signed Certificate
+
+You can create a self-signed SSL certificate using the OpenSSL tool. Run these commands on your server:
+
+
+# Create a private key
+openssl genrsa -out selfsigned.key 2048
+
+# Generate a self-signed certificate
+openssl req -new -x509 -key selfsigned.key -out selfsigned.crt -days 365 -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+
+This command generates a private key (selfsigned.key) and a certificate (selfsigned.crt) that is valid for 365 days. The -subj parameter allows you to specify the certificate's subject directly in the command line, avoiding the need for interactive prompts.
+Step 2: Configure Nginx to Use the Self-Signed Certificate
+
+Update your Nginx configuration to use the self-signed certificate. Modify your server block to include SSL settings:
+
+
+
+http {
+    server {
+        listen 443 ssl;
+        server_name localhost;  # Use localhost if you are accessing it locally
+
+        ssl_certificate /path/to/selfsigned.crt;  # Path to your self-signed certificate
+        ssl_certificate_key /path/to/selfsigned.key;  # Path to your private key
+        ssl_protocols TLSv1.2 TLSv1.3;  # Recommended protocols
+        ssl_ciphers 'HIGH:!aNULL:!MD5';  # Recommended cipher suite
+
+        location /stat {
+            rtmp_stat all;
+            rtmp_stat_stylesheet /styles/stat.xsl;
+        }
+
+        location /styles/ {
+            alias /path/to/styles/;
+        }
+    }
+
+    # Optional: HTTP server block to redirect to HTTPS
+    server {
+        listen 8080;
+        server_name localhost;
+        return 301 https://$host$request_uri;
+    }
+}
+
+Step 3: Update Your Hosts File (If Needed)
+
+If you are using a domain name other than localhost, update your hosts file to resolve the domain to your local IP address.
+Step 4: Trust the Self-Signed Certificate (Optional)
+
+To avoid security warnings in your browser when accessing your local HTTPS site, you can add the self-signed certificate to your system or browser's list of trusted certificates. This step varies by operating system and browser.
+Step 5: Reload Nginx
+
+After updating your configuration, reload Nginx to apply the changes:
+
+
+sudo systemctl reload nginx
+
+Step 6: Access the Stats Page
+
+Now, you should be able to access your stats page over HTTPS by visiting https://localhost/stat or https://your-domain.com/stat in your browser. You might need to accept the security warning due to the use of a self-signed certificate.
+
+
+
